@@ -1,0 +1,402 @@
+UseCase1:
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using Excel = Microsoft.Office.Interop.Excel;
+
+namespace AssemblyRead
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.InteropServices;
+    using Excel = Microsoft.Office.Interop.Excel;
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            dynamic app = Marshal.GetActiveObject("NanoCAD.Application.23.0");
+            dynamic modelSpace = app.ActiveDocument.ModelSpace;
+            List<string> FoundationsDataList = new List<string>();
+            int n = 0;
+
+            // Создаем новый экземпляр Excel
+            Excel.Application xlApp = new Excel.Application();
+            Excel.Workbook xlWorkbook = xlApp.Workbooks.Add();
+            Excel._Worksheet xlWorksheet = (Excel._Worksheet)xlWorkbook.Sheets[1];
+
+            // Заголовки для Excel
+            xlWorksheet.Cells[1, 1] = "длина";
+            xlWorksheet.Cells[1, 2] = "ширина";
+            xlWorksheet.Cells[1, 3] = "толщина";
+            xlWorksheet.Cells[1, 4] = "марка ростверка";
+            xlWorksheet.Cells[1, 5] = "марка закладной";
+            int row = 2; // Начинаем с первой строки ниже заголовка
+
+            foreach (dynamic item in modelSpace)
+            {
+                if (item.Element.Parameters["EXPLICATION_NUMBER"].Value.StartsWith("РМ"))
+                {
+                    int param = item.Element.SubElementsAll.count;
+                    for (int i = 0; i < param; i++)
+                    {
+                        string a = (item.Element.SubElementsAll[i].Parameters["PART_NAME"].Value);
+                        if (a == "Прокат листовой горячекатаный" && item.Element.SubElementsAll[i].Parent.Parameters["EXPLICATION_NUMBER"].Value.StartsWith("ЗД"))
+                        {
+                            string L = item.Element.SubElementsAll[i].Parameters["AEC_PART_HEIGHT"].Value;
+                            string B = item.Element.SubElementsAll[i].Parameters["AEC_PART_LENGTH"].Value;
+                            string t = item.Element.SubElementsAll[i].Parameters["AEC_PART_THICKNESS"].Value;
+                            string mark = item.Element.SubElementsAll[i].Parent.Parameters["EXPLICATION_NUMBER"].Value;
+                            // Записываем данные в Excel 
+                            xlWorksheet.Cells[row, 1] = L;
+                            xlWorksheet.Cells[row, 2] = B;
+                            xlWorksheet.Cells[row, 3] = t;
+                            xlWorksheet.Cells[row, 4] = item.Element.Parameters["EXPLICATION_NUMBER"].Value;
+                            xlWorksheet.Cells[row, 5] = mark;
+                            row++;
+                            Console.WriteLine(a);
+
+                        }
+                        else
+                        {
+                            Console.WriteLine(a);
+                        }
+                    }
+
+                }
+                else
+                {
+
+                }
+            }
+
+            // Сохраняем и закрываем Excel
+            xlWorkbook.SaveAs(@"C:\Users\isotskov\Desktop\IV МСЧ\@прога\file3.xlsx");
+            xlWorkbook.Close();
+            xlApp.Quit();
+
+            // Освобождаем COM объекты
+            Marshal.ReleaseComObject(xlWorksheet);
+            Marshal.ReleaseComObject(xlWorkbook);
+            Marshal.ReleaseComObject(xlApp);
+
+            Console.WriteLine("Данные успешно экспортированы в Excel.");
+            Console.WriteLine("Нажмите Enter, чтобы выйти...");
+            Console.ReadLine();
+        }
+    }
+}
+
+
+
+
+
+
+Case 2:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using Excel = Microsoft.Office.Interop.Excel;
+
+namespace AssemblyRead
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.InteropServices;
+    using Excel = Microsoft.Office.Interop.Excel;
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            dynamic app = Marshal.GetActiveObject("NanoCAD.Application.23.0");
+            dynamic modelSpace = app.ActiveDocument.ModelSpace;
+            List<string> FoundationsDataList = new List<string>();
+            int n = 0;
+
+            // Создаем новый экземпляр Excel
+            Excel.Application xlApp = new Excel.Application();
+            Excel.Workbook xlWorkbook = xlApp.Workbooks.Add();
+            Excel._Worksheet xlWorksheet = (Excel._Worksheet)xlWorkbook.Sheets[1];
+
+            // Заголовки для Excel
+            xlWorksheet.Cells[1, 1] = "длина";
+            xlWorksheet.Cells[1, 2] = "PART_MATERIAL";
+            xlWorksheet.Cells[1, 3] = "PART_TAG";
+            xlWorksheet.Cells[1, 4] = "EXPLICATION_NUMBER";
+            xlWorksheet.Cells[1, 5] = "наклон";
+            int row = 2; // Начинаем с первой строки ниже заголовка
+
+            foreach (dynamic item in modelSpace) // начало общего цикла
+            {
+                if (item.EntityName == "linCSViewportDef")
+                { Console.WriteLine(item.EntityName); }
+                else
+                {
+
+
+                    if (item.Element.Parameters["PART_NAME"].Value.StartsWith("Труба квадратная") && item.TrueColor.Blue == 221)
+                    {
+                        int param = item.Element.SubElementsAll.count;
+                        for (int i = 0; i < param; i++)
+                        {
+                            string a = (item.Element.Parameters["EXPLICATION_NUMBER"].Value);
+                            if (a == "")
+                            {
+                                string L = item.Element.SubElementsAll[i].Parameters["STEEL_DIM_LENGTH"].Value;
+                                string M = item.Element.SubElementsAll[i].Parameters["PART_MATERIAL"].Value;
+                                string T = item.Element.SubElementsAll[i].Parameters["PART_TAG"].Value;
+                                string N = item.Element.SubElementsAll[i].Parameters["EXPLICATION_NUMBER"].Value;
+                                if (item.StartPoint[2] == item.EndPoint[2])
+                                {
+                                    item.Element.SubElementsAll[i].Parameters.SetParameter("EXPLICATION_NUMBER", "БЭ-1");
+                                    item.UpdateGraphics();
+                                }
+
+                                else
+
+                                {
+                                    item.Element.SubElementsAll[i].Parameters.SetParameter("EXPLICATION_NUMBER", "БЭ-2");
+                                    item.UpdateGraphics();
+                                }
+
+                                // Записываем данные в Excel 
+                                xlWorksheet.Cells[row, 1] = L;
+                                xlWorksheet.Cells[row, 2] = M;
+                                xlWorksheet.Cells[row, 3] = T;
+                                xlWorksheet.Cells[row, 4] = N;
+                                xlWorksheet.Cells[row, 5] = "";
+                                row++;
+                                Console.WriteLine(item.Element.Name);
+                            }
+
+                            else
+                            {
+                                Console.WriteLine(a);
+                                string L = item.Element.SubElementsAll[i].Parameters["STEEL_DIM_LENGTH"].Value;
+                                string M = item.Element.SubElementsAll[i].Parameters["PART_MATERIAL"].Value;
+                                string T = item.Element.SubElementsAll[i].Parameters["PART_TAG"].Value;
+                                string N = item.Element.SubElementsAll[i].Parameters["EXPLICATION_NUMBER"].Value;
+
+                                // Записываем данные в Excel 
+                                xlWorksheet.Cells[row, 1] = L;
+                                xlWorksheet.Cells[row, 2] = M;
+                                xlWorksheet.Cells[row, 3] = T;
+                                xlWorksheet.Cells[row, 4] = N;
+                                xlWorksheet.Cells[row, 5] = "";
+                                row++;
+                            }
+                        }
+
+
+
+                    }
+
+                    else
+                    {
+
+                    }
+                }
+
+
+            } //конец общего цикла
+
+            // Сохраняем и закрываем Excel
+            xlWorkbook.SaveAs(@"C:\Users\isotskov\Desktop\IV МСЧ\@прога\file5.xlsx");
+            xlWorkbook.Close();
+            xlApp.Quit();
+
+            // Освобождаем COM объекты
+            Marshal.ReleaseComObject(xlWorksheet);
+            Marshal.ReleaseComObject(xlWorkbook);
+            Marshal.ReleaseComObject(xlApp);
+
+            Console.WriteLine("Данные успешно экспортированы в Excel.");
+            Console.WriteLine("Нажмите Enter, чтобы выйти...");
+            Console.ReadLine();
+
+
+
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+Case 3:
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using Excel = Microsoft.Office.Interop.Excel;
+using System.Drawing;
+
+namespace AssemblyRead
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.InteropServices;
+    using Excel = Microsoft.Office.Interop.Excel;
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            dynamic app = Marshal.GetActiveObject("NanoCAD.Application.23.0");
+            dynamic modelSpace = app.ActiveDocument.ModelSpace;
+            List<string> FoundationsDataList = new List<string>();
+            int n = 0;
+            // Создаем новый экземпляр Excel
+            Excel.Application xlApp = new Excel.Application();
+            Excel.Workbook xlWorkbook = xlApp.Workbooks.Add();
+            Excel._Worksheet xlWorksheet = (Excel._Worksheet)xlWorkbook.Sheets[1];
+            // Заголовки для Excel
+            xlWorksheet.Cells[1, 1] = "Длина профиля";
+            xlWorksheet.Cells[1, 2] = "Материал элемента";
+            xlWorksheet.Cells[1, 3] = "Профиль элемента";
+            xlWorksheet.Cells[1, 4] = "Имя элемента";
+            xlWorksheet.Cells[1, 5] = "Радиус инерции профиля";
+            xlWorksheet.Cells[1, 6] = "Проверка по гибкости";
+            int row = 2; // Начинаем с первой строки ниже заголовка
+            foreach (dynamic item in modelSpace) // начало общего цикла
+            {
+                if (item.EntityName == "linCSViewportDef")
+                { Console.WriteLine(item.EntityName); }
+                else
+                {
+                    if (item.Element.Parameters["PART_NAME"].Value.StartsWith("Стойка"))
+                    {
+                        int param = item.Element.SubElementsAll.count;
+                        for (int i = 0; i < param; i++)
+                        {
+                            if (item.Element.SubElementsAll[i].Parameters["PART_NAME"].Value.StartsWith("Труба квадратная"))
+                            {
+                                string L = item.Element.SubElementsAll[i].Parameters["STEEL_DIM_ITEMLEN"].Value;
+                                string modified = RemoveAfterDot(L);
+                                string M = item.Element.SubElementsAll[i].Parameters["PART_MATERIAL"].Value;
+                                string T = item.Element.SubElementsAll[i].Parameters["PART_TAG"].Value;
+                                string N = item.Element.SubElementsAll[i].Root.Parameters["PART_NAME"].Value + item.Element.SubElementsAll[i].Root.Parameters["EXPLICATION_NUMBER"].Value;
+                                double R = 0.00;
+                                if (T == "180х8")
+                                { R = 6.94;}
+                                else
+    if (T == "140х6")
+                                { R = 5.43;}
+                                else
+        if (T == "120х6")
+                                { R = 4.61;}
+                                else
+            if (T == "100х6")
+                                { R = 3.79;}
+                                else
+                                { R = 0.00;}
+                                string C = "";
+                                int Lmodified = Convert.ToInt32(modified);
+                                //int Rint = int.Parse(R);
+                                if (Lmodified/10 > 150 * 0.5 * R)
+                                { C = "Плохо";}
+                                else
+                                { C = "Гуд";}
+                                // Записываем данные в Excel 
+                                xlWorksheet.Cells[row, 1] = L;
+                                xlWorksheet.Cells[row, 2] = M;
+                                xlWorksheet.Cells[row, 3] = T;
+                                xlWorksheet.Cells[row, 4] = N;
+                                xlWorksheet.Cells[row, 5] = R;
+                                xlWorksheet.Cells[row, 6] = C;
+                                // Проверяем значение переменной C и закрашиваем ячейку
+                                if (C == "Плохо")
+                                {
+                                    xlWorksheet.Cells[row, 6].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                                }
+                                else
+                                {
+                                    xlWorksheet.Cells[row, 6].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Green);
+                                }
+                                row++;
+                                Console.WriteLine(item.Element.Name);
+                            }
+                            else
+                            {
+                                Console.WriteLine("");
+                                //Console.WriteLine("");
+                                //string L = item.Element.SubElementsAll[i].Parameters["STEEL_DIM_LENGTH"].Value;
+                                //string M = item.Element.SubElementsAll[i].Parameters["PART_MATERIAL"].Value;
+                                //string T = item.Element.SubElementsAll[i].Parameters["PART_TAG"].Value;
+                                //string N = item.Element.SubElementsAll[i].Parameters["EXPLICATION_NUMBER"].Value;
+                                //// Записываем данные в Excel 
+                                //xlWorksheet.Cells[row, 1] = L;
+                                //xlWorksheet.Cells[row, 2] = M;
+                                //xlWorksheet.Cells[row, 3] = T;
+                                //xlWorksheet.Cells[row, 4] = N;
+                                //xlWorksheet.Cells[row, 5] = "";
+                                //row++;
+                            }
+                        }
+                    }
+                    else
+                    {
+
+                    }
+                }
+            } //конец общего цикла
+
+            // Сохраняем и закрываем Excel
+            xlWorkbook.SaveAs(@"C:\Users\isotskov\Desktop\IV МСЧ\@прога\file5.xlsx");
+            xlWorkbook.Close();
+            xlApp.Quit();
+
+            // Освобождаем COM объекты
+            Marshal.ReleaseComObject(xlWorksheet);
+            Marshal.ReleaseComObject(xlWorkbook);
+            Marshal.ReleaseComObject(xlApp);
+
+            Console.WriteLine("Данные успешно экспортированы в Excel.");
+            Console.WriteLine("Нажмите Enter, чтобы выйти...");
+            Console.ReadLine();
+
+
+
+        }
+
+        static string RemoveAfterDot(string input)
+        {
+            int dotIndex = input.IndexOf('.');
+            if (dotIndex != -1) // Если точка найдена
+            {
+                return input.Substring(0, dotIndex); // Возвращаем часть до точки
+            }
+            return input; // Если точки нет, возвращаем исходную строку
+        }
+
+    }
+}
+
